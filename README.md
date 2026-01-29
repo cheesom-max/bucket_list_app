@@ -14,7 +14,7 @@ Gemini AI를 활용한 버킷리스트 관리 앱입니다.
 
 ## 기술 스택
 
-- **프론트엔드**: Next.js 14+, React, TypeScript, Tailwind CSS, shadcn/ui
+- **프론트엔드**: Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui
 - **백엔드**: Next.js API Routes, NextAuth.js
 - **데이터베이스**: PostgreSQL, Prisma
 - **AI**: Google Gemini API
