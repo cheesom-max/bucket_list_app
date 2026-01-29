@@ -1,0 +1,157 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // For credentials provider
+  age           Int?
+  interests     String[]  // Array of interests
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  bucketItems   BucketItem[]
+}
+
+model VerificationToken {
+  id         String   @id @default(cuid())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Bucket List Models
+model BucketItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  category    String?
+  priority    Int      @default(0) // 0: low, 1: medium, 2: high
+  status      String   @default("planned") // planned, in_progress, completed, paused
+  targetDate  DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plans       BucketPlan[]
+  progress    BucketProgress[]
+  media       BucketMedia[]
+  diary       BucketDiary[]
+  tags        BucketItemTag[]
+}
+
+model BucketPlan {
+  id          String   @id @default(cuid())
+  bucketItemId String
+  steps       Json     // Array of step objects with title, description, order
+  timeline    Json?    // Timeline information
+  resources   Json?    // Required resources (cost, time, materials)
+  obstacles   Json?    // Predicted obstacles and solutions
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bucketItem BucketItem @relation(fields: [bucketItemId], references: [id], onDelete: Cascade)
+
+  @@unique([bucketItemId])
+}
+
+model BucketProgress {
+  id          String   @id @default(cuid())
+  bucketItemId String
+  percentage  Int      @default(0) // 0-100
+  milestone   String?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  bucketItem BucketItem @relation(fields: [bucketItemId], references: [id], onDelete: Cascade)
+}
+
+model BucketMedia {
+  id          String   @id @default(cuid())
+  bucketItemId String
+  url         String
+  type        String   // image, video
+  caption     String?
+  createdAt   DateTime @default(now())
+
+  bucketItem BucketItem @relation(fields: [bucketItemId], references: [id], onDelete: Cascade)
+}
+
+model BucketDiary {
+  id          String   @id @default(cuid())
+  bucketItemId String
+  content     String   @db.Text
+  mood        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bucketItem BucketItem @relation(fields: [bucketItemId], references: [id], onDelete: Cascade)
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  bucketItems BucketItemTag[]
+}
+
+model BucketItemTag {
+  id          String   @id @default(cuid())
+  bucketItemId String
+  tagId       String
+
+  bucketItem BucketItem @relation(fields: [bucketItemId], references: [id], onDelete: Cascade)
+  tag         Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([bucketItemId, tagId])
+}
