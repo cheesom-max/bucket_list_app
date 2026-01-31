@@ -4,13 +4,15 @@ import { useQuery } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { SuggestionsDialog } from '@/components/gemini/suggestions-dialog'
-import { QuickPlanDialog } from '@/components/bucket-item/quick-plan-dialog'
+import { RightSidebar } from '@/components/layout/right-sidebar'
+import {
+  HeaderSection,
+  AIHeroSection,
+  ActiveGoalsGrid,
+  UpcomingMilestones,
+  RecentActivity,
+  QuoteCard,
+} from '@/components/dashboard'
 
 type BucketItem = {
   id: string
@@ -24,6 +26,14 @@ type BucketItem = {
   progress?: Array<{ percentage: number }>
 }
 
+// Default motivational quotes
+const defaultQuotes = [
+  { quote: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu" },
+  { quote: "Dream big, start small, act now.", author: "Robin Sharma" },
+  { quote: "Life is either a daring adventure or nothing at all.", author: "Helen Keller" },
+  { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+]
+
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -36,7 +46,7 @@ export default function DashboardPage() {
 
   const { data, isLoading } = useQuery<{
     items: BucketItem[]
-    pagination: any
+    pagination: { total: number; pages: number }
   }>({
     queryKey: ['bucket-items'],
     queryFn: async () => {
@@ -47,8 +57,22 @@ export default function DashboardPage() {
     enabled: status === 'authenticated',
   })
 
-  if (status === 'loading' || isLoading) {
-    return <div className="text-center py-8">로딩 중...</div>
+  if (status === 'loading') {
+    return (
+      <div className="flex flex-1">
+        <main className="flex-1 p-6">
+          <div className="animate-pulse space-y-6">
+            <div className="h-10 bg-muted rounded w-1/3" />
+            <div className="h-48 bg-muted rounded-2xl" />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-48 bg-muted rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   if (!session) {
@@ -56,156 +80,65 @@ export default function DashboardPage() {
   }
 
   const items = data?.items || []
-  const completedCount = items.filter((item) => item.status === 'completed').length
-  const inProgressCount = items.filter((item) => item.status === 'in_progress').length
-  const plannedCount = items.filter((item) => item.status === 'planned').length
 
-  const getPriorityColor = (priority: number) => {
-    switch (priority) {
-      case 2:
-        return 'destructive'
-      case 1:
-        return 'default'
-      default:
-        return 'secondary'
-    }
-  }
+  // Filter active goals (in_progress or planned, not completed)
+  const activeGoals = items.filter(
+    (item) => item.status !== 'completed' && item.status !== 'paused'
+  )
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'default'
-      case 'in_progress':
-        return 'default'
-      case 'paused':
-        return 'secondary'
-      default:
-        return 'outline'
-    }
+  // Get upcoming milestones (items with target dates)
+  const upcomingMilestones = items
+    .filter((item) => item.targetDate && item.status !== 'completed')
+    .sort((a, b) => new Date(a.targetDate!).getTime() - new Date(b.targetDate!).getTime())
+    .slice(0, 5)
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      targetDate: item.targetDate!,
+    }))
+
+  // Mock recent activities (in real app, this would come from API)
+  const recentActivities = items.slice(0, 3).map((item) => ({
+    id: item.id,
+    type: item.status === 'completed' ? 'complete' : 'progress',
+    message: `Updated "${item.title}"`,
+    createdAt: new Date().toISOString(),
+  }))
+
+  // Random quote
+  const randomQuote = defaultQuotes[Math.floor(Math.random() * defaultQuotes.length)]
+
+  const handleExploreAI = () => {
+    router.push('/dashboard/guide')
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">대시보드</h1>
-          <p className="text-muted-foreground mt-2">
-            {session.user?.name || session.user?.email}님의 버킷리스트
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/guide">
-            <Button variant="default" className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
-              🤖 AI 가이드 시작하기
-            </Button>
-          </Link>
-          <SuggestionsDialog />
-          <Link href="/dashboard/bucket-items/new">
-            <Button>새 항목 추가</Button>
-          </Link>
-        </div>
-      </div>
+    <div className="flex flex-1">
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 overflow-y-auto">
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* Header */}
+          <HeaderSection
+            userName={session.user?.name || session.user?.email?.split('@')[0] || 'User'}
+          />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>전체 항목</CardTitle>
-            <CardDescription>총 버킷리스트 항목 수</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{items.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>완료</CardTitle>
-            <CardDescription>달성한 항목</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{completedCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>진행 중</CardTitle>
-            <CardDescription>현재 진행 중인 항목</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{inProgressCount}</div>
-          </CardContent>
-        </Card>
-      </div>
+          {/* AI Hero Section */}
+          <AIHeroSection onExplore={handleExploreAI} />
 
-      <div>
-        <h2 className="text-2xl font-bold mb-4">최근 항목</h2>
-        {items.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              아직 버킷리스트 항목이 없습니다. 새 항목을 추가해보세요!
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {items.slice(0, 6).map((item) => {
-              const latestProgress = item.progress?.[0]?.percentage || 0
-              return (
-                <Card key={item.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <Link href={`/dashboard/bucket-items/${item.id}`}>
-                        <CardTitle className="text-lg hover:underline cursor-pointer">
-                          {item.title}
-                        </CardTitle>
-                      </Link>
-                      <Badge variant={getPriorityColor(item.priority)}>
-                        {item.priority === 2 ? '높음' : item.priority === 1 ? '보통' : '낮음'}
-                      </Badge>
-                    </div>
-                    <CardDescription className="line-clamp-2">
-                      {item.description || '설명 없음'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <Badge variant={getStatusColor(item.status)}>
-                          {item.status === 'completed'
-                            ? '완료'
-                            : item.status === 'in_progress'
-                            ? '진행 중'
-                            : item.status === 'paused'
-                            ? '보류'
-                            : '계획 중'}
-                        </Badge>
-                        <span className="text-muted-foreground">{latestProgress}%</span>
-                      </div>
-                      <Progress value={latestProgress} />
-                      <div className="flex gap-2 mt-3">
-                        <QuickPlanDialog
-                          bucketItemId={item.id}
-                          title={item.title}
-                          description={item.description}
-                          trigger={
-                            <Button variant="outline" size="sm" className="flex-1">
-                              ✨ 계획 생성
-                            </Button>
-                          }
-                        />
-                        <Link href={`/dashboard/bucket-items/${item.id}`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full">
-                            자세히
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+          {/* Active Goals Section */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Active Goals</h2>
+            <ActiveGoalsGrid goals={activeGoals} isLoading={isLoading} />
           </div>
-        )}
-      </div>
+        </div>
+      </main>
+
+      {/* Right Sidebar */}
+      <RightSidebar className="p-4 space-y-4">
+        <UpcomingMilestones milestones={upcomingMilestones} />
+        <RecentActivity activities={recentActivities} />
+        <QuoteCard quote={randomQuote.quote} author={randomQuote.author} />
+      </RightSidebar>
     </div>
   )
 }
-

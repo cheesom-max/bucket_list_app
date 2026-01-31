@@ -63,15 +63,19 @@ npm run dev
 bucket_list_app/
 ├── app/                    # Next.js App Router
 │   ├── (auth)/            # 인증 관련 페이지
-│   ├── (dashboard)/       # 대시보드 페이지
+│   ├── (dashboard)/       # 대시보드 페이지 (3-Panel 레이아웃)
 │   ├── api/               # API Routes
 │   └── layout.tsx
 ├── components/            # 재사용 가능한 컴포넌트
-│   ├── ui/               # 기본 UI 컴포넌트
-│   ├── bucket-item/      # 버킷리스트 관련 컴포넌트
-│   └── gemini/           # Gemini 기능 컴포넌트
+│   ├── ui/               # 기본 UI 컴포넌트 (shadcn/ui)
+│   ├── layout/           # 레이아웃 컴포넌트 (사이드바, 네비게이션)
+│   ├── dashboard/        # 대시보드 전용 컴포넌트
+│   ├── gemini/           # Gemini AI 채팅 및 추천 컴포넌트
+│   ├── action-plan/      # 목표 상세/액션 플랜 컴포넌트
+│   └── bucket-item/      # 버킷리스트 관련 컴포넌트
 ├── lib/                  # 유틸리티 및 설정
 │   ├── gemini/           # Gemini API 클라이언트
+│   ├── stores/           # Zustand 상태 관리
 │   ├── db/               # 데이터베이스 설정
 │   └── auth/             # 인증 설정
 ├── prisma/               # Prisma 스키마

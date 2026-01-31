@@ -1,4 +1,6 @@
-import { Header } from '@/components/layout/header'
+'use client'
+
+import { LeftSidebar } from '@/components/layout/left-sidebar'
 
 export default function DashboardLayout({
   children,
@@ -6,10 +8,14 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <>
-      <Header />
-      <main className="container mx-auto px-4 py-8">{children}</main>
-    </>
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Left Sidebar - Navigation */}
+      <LeftSidebar />
+
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto">
+        {children}
+      </main>
+    </div>
   )
 }
-

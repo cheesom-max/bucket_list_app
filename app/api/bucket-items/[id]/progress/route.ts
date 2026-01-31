@@ -12,17 +12,18 @@ const progressSchema = z.object({
 // POST /api/bucket-items/[id]/progress - 진행 상황 기록
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth()
+    const { id } = await params
     const body = await request.json()
     const validatedData = progressSchema.parse(body)
 
     // Verify ownership
     const bucketItem = await prisma.bucketItem.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     })
@@ -36,7 +37,7 @@ export async function POST(
 
     const progress = await prisma.bucketProgress.create({
       data: {
-        bucketItemId: params.id,
+        bucketItemId: id,
         percentage: validatedData.percentage,
         milestone: validatedData.milestone,
         notes: validatedData.notes,
@@ -46,7 +47,7 @@ export async function POST(
     // Update bucket item status if percentage is 100
     if (validatedData.percentage === 100 && bucketItem.status !== 'completed') {
       await prisma.bucketItem.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           status: 'completed',
           completedAt: new Date(),
@@ -58,7 +59,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.issues },
         { status: 400 }
       )
     }
@@ -74,4 +75,3 @@ export async function POST(
     )
   }
 }
-

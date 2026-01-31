@@ -28,7 +28,19 @@ export function QuickPlanDialog({
 }: QuickPlanDialogProps) {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
-  const [plan, setPlan] = useState<any>(null)
+  const [plan, setPlan] = useState<{
+    steps?: Array<{ order?: number; title?: string; description?: string; estimatedTime?: string }>
+    timeline?: {
+      estimatedDuration?: string
+      milestones?: Array<{ date?: string; description: string }>
+    }
+    resources?: {
+      cost?: string
+      time?: string
+      materials?: string[]
+    }
+    obstacles?: Array<{ obstacle?: string; solution: string }>
+  } | null>(null)
   const [loading, setLoading] = useState(false)
 
   const planMutation = useMutation({
@@ -94,13 +106,13 @@ export function QuickPlanDialog({
                 <div>
                   <h4 className="font-semibold mb-3">단계별 액션 플랜</h4>
                   <ol className="space-y-2">
-                    {plan.steps.map((step: any, index: number) => (
+                    {plan.steps.map((step, index) => (
                       <li key={index} className="flex gap-3">
                         <Badge variant="outline" className="mt-1">
                           {step.order || index + 1}
                         </Badge>
                         <div className="flex-1">
-                          <p className="font-medium">{step.title || step}</p>
+                          <p className="font-medium">{step.title || `Step ${index + 1}`}</p>
                           {step.description && (
                             <p className="text-sm text-muted-foreground mt-1">
                               {step.description}
@@ -135,7 +147,7 @@ export function QuickPlanDialog({
                           <p className="font-medium text-sm mb-2">마일스톤:</p>
                           <ul className="space-y-1 text-sm">
                             {plan.timeline.milestones.map(
-                              (milestone: any, index: number) => (
+                              (milestone, index) => (
                                 <li key={index} className="flex gap-2">
                                   <span className="text-muted-foreground">
                                     {milestone.date || `단계 ${index + 1}`}:
@@ -187,7 +199,7 @@ export function QuickPlanDialog({
                   <div>
                     <h4 className="font-semibold mb-3">예상 장애물 및 해결책</h4>
                     <div className="space-y-3">
-                      {plan.obstacles.map((item: any, index: number) => (
+                      {plan.obstacles.map((item, index) => (
                         <div key={index} className="border-l-2 pl-3">
                           <p className="font-medium text-sm">
                             {item.obstacle || `장애물 ${index + 1}`}

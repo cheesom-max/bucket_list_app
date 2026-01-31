@@ -5,15 +5,16 @@ import { prisma } from '@/lib/db/prisma'
 // POST /api/bucket-items/[id]/media - 미디어 업로드
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth()
+    const { id } = await params
 
     // Verify ownership
     const bucketItem = await prisma.bucketItem.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     })
@@ -46,7 +47,7 @@ export async function POST(
     // This is a placeholder - in production, replace with actual upload logic
     const fileType = file.type.startsWith('image/') ? 'image' : 'video'
     const fileName = `${Date.now()}-${file.name}`
-    
+
     // For demo purposes, we'll create a data URL
     // In production, upload to storage and get URL
     const bytes = await file.arrayBuffer()
@@ -56,7 +57,7 @@ export async function POST(
 
     const media = await prisma.bucketMedia.create({
       data: {
-        bucketItemId: params.id,
+        bucketItemId: id,
         url: dataUrl, // In production, this would be the storage URL
         type: fileType,
         caption: caption || null,
@@ -80,15 +81,16 @@ export async function POST(
 // GET /api/bucket-items/[id]/media - 미디어 목록 조회
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth()
+    const { id } = await params
 
     // Verify ownership
     const bucketItem = await prisma.bucketItem.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     })
@@ -102,7 +104,7 @@ export async function GET(
 
     const media = await prisma.bucketMedia.findMany({
       where: {
-        bucketItemId: params.id,
+        bucketItemId: id,
       },
       orderBy: {
         createdAt: 'desc',
@@ -122,4 +124,3 @@ export async function GET(
     )
   }
 }
-

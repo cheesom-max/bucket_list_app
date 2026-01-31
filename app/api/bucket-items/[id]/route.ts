@@ -16,14 +16,15 @@ const updateBucketItemSchema = z.object({
 // GET /api/bucket-items/[id] - 상세 조회
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth()
+    const { id } = await params
 
     const bucketItem = await prisma.bucketItem.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
       include: {
@@ -69,17 +70,18 @@ export async function GET(
 // PATCH /api/bucket-items/[id] - 수정
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth()
+    const { id } = await params
     const body = await request.json()
     const validatedData = updateBucketItemSchema.parse(body)
 
     // Verify ownership
     const existingItem = await prisma.bucketItem.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     })
@@ -95,13 +97,13 @@ export async function PATCH(
 
     // Handle status change to completed
     if (validatedData.status === 'completed' && existingItem.status !== 'completed') {
-      updateData.completedAt = new Date() as any
+      (updateData as any).completedAt = new Date()
     } else if (validatedData.status !== 'completed' && existingItem.status === 'completed') {
-      updateData.completedAt = null as any
+      (updateData as any).completedAt = null
     }
 
     const bucketItem = await prisma.bucketItem.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...updateData,
         targetDate: validatedData.targetDate !== undefined
@@ -132,7 +134,7 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.issues },
         { status: 400 }
       )
     }
@@ -152,15 +154,16 @@ export async function PATCH(
 // DELETE /api/bucket-items/[id] - 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth()
+    const { id } = await params
 
     // Verify ownership
     const existingItem = await prisma.bucketItem.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     })
@@ -173,7 +176,7 @@ export async function DELETE(
     }
 
     await prisma.bucketItem.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: 'Bucket item deleted successfully' })
@@ -189,4 +192,3 @@ export async function DELETE(
     )
   }
 }
-

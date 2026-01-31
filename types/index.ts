@@ -1,4 +1,4 @@
-import { BucketItem, BucketPlan, BucketProgress, BucketMedia, BucketDiary, Tag } from '@prisma/client'
+import { BucketItem, BucketPlan, BucketProgress, BucketMedia, BucketDiary, Tag } from '@/lib/generated/prisma/client'
 
 export type BucketItemWithRelations = BucketItem & {
   plans?: BucketPlan[]
@@ -56,5 +56,35 @@ export type BucketPlanResponse = {
     obstacle: string
     solution: string
   }>
+}
+
+// UI Component Types
+export interface PlanStep {
+  id: string
+  title: string
+  description?: string
+  order: number
+  estimatedDuration?: string
+  isCompleted: boolean
+}
+
+export interface Resource {
+  type: 'cost' | 'time' | 'material' | 'link'
+  label: string
+  value: string
+  url?: string
+}
+
+export interface Activity {
+  id: string
+  type: string
+  message: string
+  createdAt: string
+}
+
+export interface Milestone {
+  id: string
+  title: string
+  targetDate: string
 }
 

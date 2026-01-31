@@ -26,7 +26,7 @@ export function InteractiveGuide() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [questions, setQuestions] = useState<GuideQuestion[]>([])
   const [answers, setAnswers] = useState<GuideAnswers>({})
-  const [currentAnswer, setCurrentAnswer] = useState<any>(null)
+  const [currentAnswer, setCurrentAnswer] = useState<string | number | string[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [explanation, setExplanation] = useState('')
@@ -62,7 +62,7 @@ export function InteractiveGuide() {
     }
   }
 
-  const handleAnswer = (value: any) => {
+  const handleAnswer = (value: string | number | string[]) => {
     setCurrentAnswer(value)
   }
 
@@ -172,7 +172,7 @@ export function InteractiveGuide() {
         return (
           <Input
             type="number"
-            value={currentAnswer || ''}
+            value={typeof currentAnswer === 'number' ? currentAnswer : ''}
             onChange={(e) => handleAnswer(parseInt(e.target.value) || 0)}
             placeholder="숫자를 입력하세요"
           />
@@ -180,7 +180,7 @@ export function InteractiveGuide() {
 
       case 'multiple_choice':
         return (
-          <Select value={currentAnswer || ''} onValueChange={handleAnswer}>
+          <Select value={typeof currentAnswer === 'string' ? currentAnswer : ''} onValueChange={handleAnswer}>
             <SelectTrigger>
               <SelectValue placeholder="선택하세요" />
             </SelectTrigger>
@@ -224,7 +224,7 @@ export function InteractiveGuide() {
       default:
         return (
           <Input
-            value={currentAnswer || ''}
+            value={typeof currentAnswer === 'string' ? currentAnswer : ''}
             onChange={(e) => handleAnswer(e.target.value)}
             placeholder="답변을 입력하세요"
           />

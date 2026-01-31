@@ -1,0 +1,7 @@
+export { HeaderSection } from './header-section'
+export { AIHeroSection } from './ai-hero-section'
+export { GoalCard } from './goal-card'
+export { ActiveGoalsGrid } from './active-goals-grid'
+export { UpcomingMilestones } from './upcoming-milestones'
+export { RecentActivity } from './recent-activity'
+export { QuoteCard } from './quote-card'

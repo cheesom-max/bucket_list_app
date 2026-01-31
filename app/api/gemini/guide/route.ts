@@ -9,8 +9,8 @@ import { z } from 'zod'
 
 const guideRequestSchema = z.object({
   step: z.enum(['questions', 'suggestions']),
-  previousAnswers: z.record(z.any()).optional(),
-  answers: z.record(z.any()).optional(),
+  previousAnswers: z.record(z.string(), z.any()).optional(),
+  answers: z.record(z.string(), z.any()).optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.issues },
         { status: 400 }
       )
     }

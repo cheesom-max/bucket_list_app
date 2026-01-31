@@ -119,7 +119,7 @@ export function MediaUpload({ bucketItemId }: MediaUploadProps) {
       <CardContent>
         {mediaList && mediaList.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {mediaList.map((media: any) => (
+            {mediaList.map((media: { id: string; type: string; url: string; caption?: string }) => (
               <div key={media.id} className="relative aspect-square">
                 {media.type === 'image' ? (
                   <Image
